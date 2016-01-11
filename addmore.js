@@ -3,7 +3,7 @@ var wb_add_more_class_ref = {};
 var wb_add_more_root_values = {};
 var wb_add_more_all_values = {};
 (function($) {
-    $.fn.wb_add_more = function(wb_options) {
+    $.fn.addmore = function(wb_options) {
         if (!wb_options) {
             wb_options = {};
         }
