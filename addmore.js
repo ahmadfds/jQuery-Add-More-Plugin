@@ -12,8 +12,8 @@ var wb_add_more_all_values = {};
             wb_options.add_more_link_text = 'Add More';
         }
 
-        if (!wb_options.add_more_link_pos) {
-            wb_options.add_more_link_pos = 'top';
+        if (!wb_options.add_more_v_link_pos) {
+            wb_options.add_more_v_link_pos = 'top';
         }
 
         if (!wb_options.add_more_link_classes) {
@@ -24,8 +24,8 @@ var wb_add_more_all_values = {};
             wb_options.remove_link_text = 'Remove';
         }
 
-        if (!wb_options.remove_link_pos) {
-            wb_options.remove_link_pos = 'top';
+        if (!wb_options.remove_v_link_pos) {
+            wb_options.remove_v_link_pos = 'top';
         }
 
         if (!wb_options.remove_link_classes) {
@@ -50,9 +50,17 @@ var wb_add_more_all_values = {};
             wb_options.init_values = 0;
         }
 
+        var attributes = {};
+        $(this).each(function() {
+            $.each(this.attributes, function() {
+                if (this.specified) {
+                    attributes[this.name] = this.value;
+                }
+            });
+        });
 
         $(this).hide();
-        var class_var = new AddMoreClass($(this).attr('data-add-more-class-id'), $(this).html(), wb_options, null);
+        var class_var = new AddMoreClass($(this).html(), wb_options, null, attributes);
         class_var.add_more_name = $(this).attr('data-add-more-name');
         if (!class_var.add_more_name) {
             class_var.add_more_name = class_var.unique_id;
@@ -124,17 +132,16 @@ var wb_add_more_all_values = {};
 })(jQuery);
 
 
-function AddMoreClass(class_id, content, wb_options, parent_class) {
-    this.class_id = class_id;
+function AddMoreClass(content, wb_options, parent_class, attr) {
     this.refrences = {};
     this.prepared_string = '';
     this.origin_content = content;
     this.unique_id = null;
     this.wb_options = wb_options;
-    this.onaddmore = function() {
-    };
+    this.onaddmore = function() {};
     this.add_more_name = null;
-    this.attr = {};
+    this.attr = attr;
+    //console.log(attr);
     this.parent_class = parent_class;
 
     this.init();
@@ -154,14 +161,15 @@ AddMoreClass.prototype = {
         //
         // create refrences
         //
-        var sub_classes_re = /(<([0-9]+)([^>\s]+)\s+data-add-more-class-id\s*=\s*(['"])(.*?)\4>)(.*?)<\2\/\3>/i;
+        var sub_classes_re = /(<([0-9]+)([^>\s]+)\s+data-add-more-class-id[^>]*>)(.*?)<\2\/\3>/i;
         var sub_class = sub_classes_re.exec(prepared_string);
-        var sub_class_name = '';
         var sub_class_content = '';
         while (sub_class) {
-            sub_class_name = sub_class[5];
-            sub_class_content = sub_class[6].replace(/<[0-9]+/g, '<');
-            var sub_class_obj = new AddMoreClass(sub_class_name, sub_class_content, this.wb_options, this);
+            sub_class_content = sub_class[4].replace(/<[0-9]+/g, '<');
+            // get attributes
+            var attributes = this.parse_attr(sub_class[1]);
+            
+            var sub_class_obj = new AddMoreClass(sub_class_content, this.wb_options, this, attributes);
             wb_add_more_class_ref[sub_class_obj.unique_id] = sub_class_obj;
             this.refrences[sub_class_obj.unique_id] = sub_class_obj;
             prepared_string = prepared_string.replace(sub_class[0], '{@ref ' + sub_class_obj.unique_id + '}');
@@ -176,6 +184,30 @@ AddMoreClass.prototype = {
         }
         this.prepared_string = prepared_string;
     },
+    parse_attr: function(tag) {
+        var attributes = {};
+        var tag_split = tag.split(/[\s]/);
+        if(tag_split) {
+            for(var i=1; i<tag_split.length; i++) {
+                // trim
+                var trimed_string = tag_split[i].replace(/(^\s+|\s+$)/g, '');
+                // remove close tag
+                trimed_string = trimed_string.replace(/>$/, '');
+                var splitted_string = trimed_string.split('=');
+                if(splitted_string) {
+                    var attr_name = splitted_string[0];
+                    var attr_value = null;
+                    splitted_string.shift();
+                    if(splitted_string.length) {
+                        attr_value = splitted_string.join('=');
+                        attr_value = attr_value.replace(/(^["']|["']$)/g, '');
+                    }
+                    attributes[attr_name] = attr_value;
+                }
+            }
+        }
+        return attributes;
+    },
     produce_add_more_link: function(unique_id, refilled_value) {
         if (!refilled_value) {
             refilled_value = '';
@@ -185,7 +217,7 @@ AddMoreClass.prototype = {
         } else {
             unique_id = CryptoJS.MD5(this.unique_id + '_' + unique_id);
         }
-        if (this.wb_options.add_more_link_pos == 'bottom') {
+        if (this.wb_options.add_more_v_link_pos == 'bottom') {
             return '<div class="add-more-values-area" id="add_more_values_area_' + unique_id + '">' + refilled_value + '</div>' +
                     '<a href="javascript:;" class="add-more-link ' + this.wb_options.add_more_link_classes + '" id="add_more_link_' + unique_id + '">' + this.wb_options.add_more_link_text + '</a>';
         } else {
@@ -309,11 +341,11 @@ AddMoreValue.prototype = {
         }
 
         var value = '<div class="add-more-value ' + this.wb_options.value_html_classes + '" id="' + this.unique_id + '" style="position: relative;">';
-        if (this.wb_options.remove_link_pos == 'top') {
+        if (this.wb_options.remove_v_link_pos == 'top') {
             value += '<a href="javascript:;" class="add-more-value-remove ' + this.wb_options.remove_link_classes + '" style="position: absolute; right:0; top: 0;">' + this.wb_options.remove_link_text + '</a>';
         }
         value += contents;
-        if (this.wb_options.remove_link_pos != 'top') {
+        if (this.wb_options.remove_v_link_pos != 'top') {
             value += '<a href="javascript:;" class="add-more-value-remove ' + this.wb_options.remove_link_classes + '" style="position: absolute; right:0; top: 0;">' + this.wb_options.remove_link_text + '</a>';
         }
         value += '</div>';
