@@ -39,11 +39,7 @@ var wb_add_more_all_values = {};
         if (!wb_options.sortable) {
             wb_options.sortable = 0;
         } else {
-            if (wb_options.sortable) {
-                wb_options.sortable = 1;
-            } else {
-                wb_options.sortable = 0;
-            }
+            wb_options.sortable = parseInt(wb_options.sortable);
         }
 
         if (typeof wb_options.init_values === 'undefined') {
@@ -94,9 +90,9 @@ var wb_add_more_all_values = {};
         //
         class_var.produce_handlers();
 
-        if (wb_options.sortable) {
+        if (parseInt(wb_options.sortable)) {
             // if sortable 
-            $('.add-more-values-area').sortable({
+            $('#add_more_values_area_' + class_var.unique_id).sortable({
                 stop: function(event, ui) {
                     var value_obj = wb_add_more_all_values[ui.item.attr('id')];
                     wb_reset_parent_value_fields_names(value_obj);
@@ -137,12 +133,20 @@ function AddMoreClass(content, wb_options, parent_class, attr) {
     this.prepared_string = '';
     this.origin_content = content;
     this.unique_id = null;
-    this.wb_options = wb_options;
+    this.wb_options = Object.create(wb_options);
     this.onaddmore = function() {};
     this.add_more_name = null;
     this.attr = attr;
-    //console.log(attr);
     this.parent_class = parent_class;
+
+    // overwrite wb_options
+    for(var inx in attr) {
+        var regex = /data-option-(.*)/;
+        var matches = regex.exec(inx);
+        if(matches) {
+            this.wb_options[matches[1]] = attr[inx];
+        }
+    }
 
     this.init();
 }
@@ -247,9 +251,9 @@ AddMoreClass.prototype = {
                 class_ref.refrences[sub_class_id].produce_handlers(new_value);
             }
 
-            if (class_ref.wb_options.sortable) {
+            if (parseInt(class_ref.wb_options.sortable)) {
                 // if sortable 
-                $('.add-more-values-area').sortable({
+                $('#add_more_values_area_' + unique_id).sortable({
                     stop: function(event, ui) {
                         var value_obj = wb_add_more_all_values[ui.item.attr('id')];
                         wb_reset_parent_value_fields_names(value_obj);
