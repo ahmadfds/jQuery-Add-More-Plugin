@@ -12,8 +12,8 @@ var wb_add_more_all_values = {};
             wb_options.add_more_link_text = 'Add More';
         }
 
-        if (!wb_options.add_more_v_link_pos) {
-            wb_options.add_more_v_link_pos = 'top';
+        if (!wb_options.add_more_link_v_pos) {
+            wb_options.add_more_link_v_pos = 'top';
         }
 
         if (!wb_options.add_more_link_classes) {
@@ -24,8 +24,8 @@ var wb_add_more_all_values = {};
             wb_options.remove_link_text = 'Remove';
         }
 
-        if (!wb_options.remove_v_link_pos) {
-            wb_options.remove_v_link_pos = 'top';
+        if (!wb_options.remove_link_v_pos) {
+            wb_options.remove_link_v_pos = 'top';
         }
 
         if (!wb_options.remove_link_classes) {
@@ -144,7 +144,7 @@ function AddMoreClass(content, wb_options, parent_class, attr) {
         var regex = /data-option-(.*)/;
         var matches = regex.exec(inx);
         if(matches) {
-            this.wb_options[matches[1]] = attr[inx];
+            this.wb_options[matches[1].replace("-", '_')] = attr[inx];
         }
     }
 
@@ -165,7 +165,8 @@ AddMoreClass.prototype = {
         //
         // create refrences
         //
-        var sub_classes_re = /(<([0-9]+)([^>\s]+)\s+data-add-more-class-id[^>]*>)(.*?)<\2\/\3>/i;
+        //var sub_classes_re = /(<([0-9]+)([^>\s]+)\s+data-add-more-class-id[^>]*>)(.*?)<\2\/\3>/i;
+        var sub_classes_re = /(<([0-9]+)([a-z0-9]+)[^>]*\s+data-add-more-class-id[^>]*>)(.*?)<\2\/\3>/i;
         var sub_class = sub_classes_re.exec(prepared_string);
         var sub_class_content = '';
         while (sub_class) {
@@ -221,7 +222,7 @@ AddMoreClass.prototype = {
         } else {
             unique_id = CryptoJS.MD5(this.unique_id + '_' + unique_id);
         }
-        if (this.wb_options.add_more_v_link_pos == 'bottom') {
+        if (this.wb_options.add_more_link_v_pos == 'bottom') {
             return '<div class="add-more-values-area" id="add_more_values_area_' + unique_id + '">' + refilled_value + '</div>' +
                     '<a href="javascript:;" class="add-more-link ' + this.wb_options.add_more_link_classes + '" id="add_more_link_' + unique_id + '">' + this.wb_options.add_more_link_text + '</a>';
         } else {
@@ -299,7 +300,7 @@ AddMoreValue.prototype = {
             // create refrences
             //
             var sub_class_index = 0;
-            var sub_value_re = /<([0-9]+)([^>\s]+)[^>]*\s+class\s*=\s*(['"])(add-more-value|add-more-block)\3[^>]*>(.*?)<\1\/\2>/gi;
+            var sub_value_re = /<([0-9]+)([a-z0-9]+)[^>]*\s+class\s*=\s*(['"])(add-more-value|add-more-block)\3[^>]*>(.*?)<\1\/\2>/gi;
             var sub_value = sub_value_re.exec(prepared_string);
             var sub_view_content = '';
             while (sub_value) {
@@ -345,11 +346,11 @@ AddMoreValue.prototype = {
         }
 
         var value = '<div class="add-more-value ' + this.wb_options.value_html_classes + '" id="' + this.unique_id + '" style="position: relative;">';
-        if (this.wb_options.remove_v_link_pos == 'top') {
+        if (this.wb_options.remove_link_v_pos == 'top') {
             value += '<a href="javascript:;" class="add-more-value-remove ' + this.wb_options.remove_link_classes + '" style="position: absolute; right:0; top: 0;">' + this.wb_options.remove_link_text + '</a>';
         }
         value += contents;
-        if (this.wb_options.remove_v_link_pos != 'top') {
+        if (this.wb_options.remove_link_v_pos != 'top') {
             value += '<a href="javascript:;" class="add-more-value-remove ' + this.wb_options.remove_link_classes + '" style="position: absolute; right:0; top: 0;">' + this.wb_options.remove_link_text + '</a>';
         }
         value += '</div>';
