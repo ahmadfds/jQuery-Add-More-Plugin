@@ -64,6 +64,7 @@ var wb_add_more_all_values = {};
             });
         }
 
+        $('body').off('click', '.add-more-value-remove');
         $('body').on('click', '.add-more-value-remove', function() {
             var value_ref = wb_add_more_all_values[$(this).parent().attr('id')];
             if (value_ref.parent_value) {
@@ -204,6 +205,7 @@ AddMoreClass.prototype = {
         }
         var class_ref = this;
 
+        $('body').off('click', '#add_more_link_' + unique_id);
         $('body').on('click', '#add_more_link_' + unique_id, function() {
             var new_value = new AddMoreValue(class_ref, null, parent_value);
             wb_add_more_all_values[new_value.unique_id] = new_value;
