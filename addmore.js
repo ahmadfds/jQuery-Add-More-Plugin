@@ -1,14 +1,42 @@
 var wb_counter = 0;
-var wb_add_more_class_ref = {};
-var wb_add_more_root_values = {};
-var wb_add_more_all_values = {};
+
 (function($) {
     $.fn.addmore = function(wb_options) {
+        
+        
         if (!wb_options) {
             wb_options = {};
         }
 
         wb_options = wb_set_options_defaults(wb_options);
+        wb_options.object_ref = $(this);
+        
+        wb_options.object_ref.wb_add_more_class_ref = {};
+        wb_options.object_ref.wb_add_more_root_values = {};
+        wb_options.object_ref.wb_add_more_all_values = {};
+        
+        wb_options.object_ref.wb_reset_parent_value_fields_names = function(value) {
+            var parent_value = value.parent_value;
+            wb_remove_name_attr($('#' + value.unique_id).parent('.add-more-values-area').children());
+            if (!parent_value) {
+
+                var thisref = this;
+                var new_index = 0;
+                $('#' + value.unique_id).parent('.add-more-values-area').children().each(function() {
+                    var value_key = $(this).attr('id');
+                    if (thisref.wb_add_more_root_values[value_key]) {
+                        thisref.wb_add_more_root_values[value_key].index = new_index;
+                        new_index++;
+                    }
+                });
+
+                for (var value_key in thisref.wb_add_more_root_values) {
+                    thisref.wb_add_more_root_values[value_key].set_inputs_names();
+                }
+            } else {
+                parent_value.set_inputs_names();
+            }
+        };
 
         var attributes = {};
         $(this).each(function() {
@@ -25,7 +53,7 @@ var wb_add_more_all_values = {};
         if (!class_var.add_more_name) {
             class_var.add_more_name = class_var.unique_id;
         }
-        wb_add_more_class_ref[class_var.unique_id] = class_var;
+        wb_options.object_ref.wb_add_more_class_ref[class_var.unique_id] = class_var;
 
         //
         // create add more link
@@ -38,8 +66,8 @@ var wb_add_more_all_values = {};
         //
         $(this).parent().children('.add-more-value').each(function() {
             var value_obj = new AddMoreValue(class_var, $(this).html(), null);
-            wb_add_more_root_values[value_obj.unique_id] = value_obj;
-            wb_add_more_all_values[value_obj.unique_id] = value_obj;
+            wb_options.object_ref.wb_add_more_root_values[value_obj.unique_id] = value_obj;
+            wb_options.object_ref.wb_add_more_all_values[value_obj.unique_id] = value_obj;
             $('#add_more_values_area_' + class_var.unique_id).append(value_obj.to_string);
             $(this).remove();
         });
@@ -58,22 +86,22 @@ var wb_add_more_all_values = {};
             // if sortable 
             $('#add_more_values_area_' + class_var.unique_id).sortable({
                 stop: function(event, ui) {
-                    var value_obj = wb_add_more_all_values[ui.item.attr('id')];
-                    wb_reset_parent_value_fields_names(value_obj);
+                    var value_obj = wb_options.object_ref.wb_add_more_all_values[ui.item.attr('id')];
+                    wb_options.object_ref.wb_reset_parent_value_fields_names(value_obj);
                 }
             });
         }
 
         $('body').off('click', '.add-more-value-remove');
         $('body').on('click', '.add-more-value-remove', function() {
-            var value_ref = wb_add_more_all_values[$(this).parent().attr('id')];
+            var value_ref = wb_options.object_ref.wb_add_more_all_values[$(this).parent().attr('id')];
             if (value_ref.parent_value) {
                 delete value_ref.parent_value.children[value_ref.unique_id];
             } else {
-                delete wb_add_more_root_values[value_ref.unique_id];
+                delete wb_options.object_ref.wb_add_more_root_values[value_ref.unique_id];
             }
-            delete wb_add_more_all_values[value_ref.unique_id];
-            wb_reset_parent_value_fields_names(value_ref);
+            delete wb_options.object_ref.wb_add_more_all_values[value_ref.unique_id];
+            wb_options.object_ref.wb_reset_parent_value_fields_names(value_ref);
             $(this).parent().remove();
 
         });
@@ -82,8 +110,8 @@ var wb_add_more_all_values = {};
             class_var.onaddmore = wb_options.onaddmore;
         }
 
-        for (var value_key in wb_add_more_root_values) {
-            wb_reset_parent_value_fields_names(wb_add_more_root_values[value_key]);
+        for (var value_key in wb_options.object_ref.wb_add_more_root_values) {
+            wb_options.object_ref.wb_reset_parent_value_fields_names(wb_options.object_ref.wb_add_more_root_values[value_key]);
             break;
         }
 
@@ -141,7 +169,7 @@ AddMoreClass.prototype = {
             var attributes = this.parse_attr(sub_class[1]);
             
             var sub_class_obj = new AddMoreClass(sub_class_content, this.wb_options, this, attributes);
-            wb_add_more_class_ref[sub_class_obj.unique_id] = sub_class_obj;
+            this.wb_options.object_ref.wb_add_more_class_ref[sub_class_obj.unique_id] = sub_class_obj;
             this.refrences[sub_class_obj.unique_id] = sub_class_obj;
             prepared_string = prepared_string.replace(sub_class[0], '{@ref ' + sub_class_obj.unique_id + '}');
             // get add more name
@@ -208,12 +236,12 @@ AddMoreClass.prototype = {
         $('body').off('click', '#add_more_link_' + unique_id);
         $('body').on('click', '#add_more_link_' + unique_id, function() {
             var new_value = new AddMoreValue(class_ref, null, parent_value);
-            wb_add_more_all_values[new_value.unique_id] = new_value;
+            class_ref.wb_options.object_ref.wb_add_more_all_values[new_value.unique_id] = new_value;
             $('#add_more_values_area_' + unique_id).append(new_value.to_string);
             if (!parent_value) {
-                wb_add_more_root_values[new_value.unique_id] = new_value;
+                class_ref.wb_options.object_ref.wb_add_more_root_values[new_value.unique_id] = new_value;
             }
-            wb_reset_parent_value_fields_names(new_value);
+            class_ref.wb_options.object_ref.wb_reset_parent_value_fields_names(new_value);
 
             for (var sub_class_id in class_ref.refrences) {
                 class_ref.refrences[sub_class_id].produce_handlers(new_value);
@@ -223,8 +251,8 @@ AddMoreClass.prototype = {
                 // if sortable 
                 $('#add_more_values_area_' + unique_id).sortable({
                     stop: function(event, ui) {
-                        var value_obj = wb_add_more_all_values[ui.item.attr('id')];
-                        wb_reset_parent_value_fields_names(value_obj);
+                        var value_obj = class_ref.wb_options.object_ref.wb_add_more_all_values[ui.item.attr('id')];
+                        class_ref.wb_options.object_ref.wb_reset_parent_value_fields_names(value_obj);
                     }
                 });
             }
@@ -291,7 +319,7 @@ AddMoreValue.prototype = {
                         sub_view_content = sub_value[5].replace(/<[0-9]+/g, '<');
                         var sub_view_obj = new AddMoreValue(sub_class, sub_view_content, this);
                         this.refrences[sub_view_obj.unique_id] = sub_view_obj;
-                        wb_add_more_all_values[sub_view_obj.unique_id] = sub_view_obj;
+                        this.wb_options.object_ref.wb_add_more_all_values[sub_view_obj.unique_id] = sub_view_obj;
                         prepared_string = prepared_string.replace(sub_value[0], sub_class.produce_add_more_link(this.unique_id, '{@ref ' + sub_view_obj.unique_id + '}'));
                     }
                     sub_class.produce_handlers(this);
@@ -352,7 +380,6 @@ AddMoreValue.prototype = {
     get_hierarchy_name: function() {
         if (this.parent_value) {
             if(this.wb_options.change_inputs_names) {
-                console.log(this.wb_options.change_inputs_names);
                 var parent_value_name = this.parent_value.get_hierarchy_name();
                 if(parent_value_name) {
                     return parent_value_name + '[' + this.class_obj.add_more_name + ']' + '[' + this.index + ']';
@@ -438,28 +465,6 @@ function wb_prepare_tags_for_parsing(contents) {
     return prepared_string;
 }
 
-function wb_reset_parent_value_fields_names(value) {
-    var parent_value = value.parent_value;
-    wb_remove_name_attr($('#' + value.unique_id).parent('.add-more-values-area').children());
-    if (!parent_value) {
-
-        var new_index = 0;
-        $('#' + value.unique_id).parent('.add-more-values-area').children().each(function() {
-            var value_key = $(this).attr('id');
-            if (wb_add_more_root_values[value_key]) {
-                wb_add_more_root_values[value_key].index = new_index;
-                new_index++;
-            }
-        });
-
-        for (var value_key in wb_add_more_root_values) {
-            wb_add_more_root_values[value_key].set_inputs_names();
-        }
-    } else {
-        parent_value.set_inputs_names();
-    }
-}
-
 function wb_set_options_defaults(wb_options) {
     if (!wb_options.change_inputs_names) {
         wb_options.change_inputs_names = 0;
@@ -504,6 +509,6 @@ function wb_set_options_defaults(wb_options) {
     if (typeof wb_options.init_values === 'undefined') {
         wb_options.init_values = 0;
     }
-    
+
     return wb_options;
 }
